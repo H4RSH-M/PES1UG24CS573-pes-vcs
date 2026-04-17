@@ -130,15 +130,29 @@ static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID 
         const char *slash = strchr(rel_path, '/');
 
         if (!slash) {
-            // It's a flat file at this directory level
             TreeEntry *te = &tree.entries[tree.count++];
             te->mode = entries[i].mode;
             te->hash = entries[i].hash;
             strcpy(te->name, rel_path);
             i++;
         } else {
-            // Stub for subdirectories
-            i++;
+            // It's a directory, isolate the prefix string
+            int dir_len = slash - rel_path;
+            char dir_name[256];
+            strncpy(dir_name, rel_path, dir_len);
+            dir_name[dir_len] = '\0';
+
+            // Fast-forward pointer to find the boundary of this directory block
+            int j = i;
+            while (j < count) {
+                const char *next_path = entries[j].path + depth;
+                if (strncmp(next_path, dir_name, dir_len) != 0 || next_path[dir_len] != '/') {
+                    break;
+                }
+                j++;
+            }
+
+            i = j; // Skip past the directory block
         }
     }
     

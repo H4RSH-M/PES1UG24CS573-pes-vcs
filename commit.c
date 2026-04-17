@@ -212,6 +212,16 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     new_commit.timestamp = (uint64_t)time(NULL);
     snprintf(new_commit.message, sizeof(new_commit.message), "%s", message);
 
-    (void)commit_id_out;
-    return -1; // Stub 3
+    void *data;
+    size_t len;
+    if (commit_serialize(&new_commit, &data, &len) != 0) return -1;
+
+    if (object_write(OBJ_COMMIT, data, len, commit_id_out) != 0) {
+        free(data);
+        fprintf(stderr, "error: failed to write commit object\n");
+        return -1;
+    }
+    free(data);
+
+    return -1; // Stub 4
 }

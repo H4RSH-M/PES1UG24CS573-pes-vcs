@@ -136,13 +136,11 @@ static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID 
             strcpy(te->name, rel_path);
             i++;
         } else {
-            // It's a directory, isolate the prefix string
             int dir_len = slash - rel_path;
             char dir_name[256];
             strncpy(dir_name, rel_path, dir_len);
             dir_name[dir_len] = '\0';
 
-            // Fast-forward pointer to find the boundary of this directory block
             int j = i;
             while (j < count) {
                 const char *next_path = entries[j].path + depth;
@@ -152,7 +150,18 @@ static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID 
                 j++;
             }
 
-            i = j; // Skip past the directory block
+            // Recursive call for the bounded block of entries
+            ObjectID subtree_id;
+            if (build_tree_level(entries + i, j - i, depth + dir_len + 1, &subtree_id) != 0) {
+                return -1;
+            }
+
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = MODE_DIR;
+            te->hash = subtree_id;
+            strcpy(te->name, dir_name);
+
+            i = j; 
         }
     }
     

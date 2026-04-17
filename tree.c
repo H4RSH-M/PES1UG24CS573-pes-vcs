@@ -116,6 +116,21 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 
 // ─── TODO: Implement these ──────────────────────────────────────────────────
 
+#include "index.h"
+
+// Forward declaration of object store write function
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
+// Recursive helper to build subtrees
+static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID *out_id) {
+    Tree tree;
+    tree.count = 0;
+    
+    // Stub for Commit 1
+    (void)entries; (void)count; (void)depth; (void)out_id;
+    return -1;
+}
+
 // Build a tree hierarchy from the current index and write all tree
 // objects to the object store.
 //
@@ -130,8 +145,8 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //
 // Returns 0 on success, -1 on error.
 int tree_from_index(ObjectID *id_out) {
-    // TODO: Implement recursive tree building
-    // (See Lab Appendix for logical steps)
-    (void)id_out;
-    return -1;
+    Index idx;
+    if (index_load(&idx) != 0) return -1;
+    
+    return build_tree_level(idx.entries, idx.count, 0, id_out);
 }

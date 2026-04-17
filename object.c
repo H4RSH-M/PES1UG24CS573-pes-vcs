@@ -124,11 +124,24 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
         return -1;
     }
     
-    write(fd, full_buf, header_len + len);
-    close(fd);
+    if (write(fd, full_buf, header_len + len) != (ssize_t)(header_len + len)) {
+        close(fd);
+        unlink(tmp_path);
+        free(full_buf);
+        return -1;
+    }
 
+    fsync(fd);
+    close(fd);
     free(full_buf);
-    return 0; // Commit 2 stub
+
+    char final_path[512];
+    object_path(id_out, final_path, sizeof(final_path));
+    if (rename(tmp_path, final_path) != 0) {
+        unlink(tmp_path);
+        return -1;
+    }
+    return 0;
 }
 
 // Read an object from the store.

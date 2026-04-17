@@ -223,5 +223,10 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     }
     free(data);
 
-    return -1; // Stub 4
+    if (head_update(commit_id_out) != 0) {
+        fprintf(stderr, "error: failed to update HEAD reference\n");
+        return -1;
+    }
+
+    return 0;
 }

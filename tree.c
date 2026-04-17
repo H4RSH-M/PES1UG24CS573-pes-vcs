@@ -150,7 +150,6 @@ static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID 
                 j++;
             }
 
-            // Recursive call for the bounded block of entries
             ObjectID subtree_id;
             if (build_tree_level(entries + i, j - i, depth + dir_len + 1, &subtree_id) != 0) {
                 return -1;
@@ -165,8 +164,14 @@ static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID 
         }
     }
     
-    (void)out_id;
-    return -1; // Stub
+    // Serialize and write the compiled tree for this layer to the object store
+    void *data;
+    size_t len;
+    if (tree_serialize(&tree, &data, &len) != 0) return -1;
+
+    int rc = object_write(OBJ_TREE, data, len, out_id);
+    free(data);
+    return rc;
 }
 
 // Build a tree hierarchy from the current index and write all tree

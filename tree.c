@@ -118,17 +118,32 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 
 #include "index.h"
 
-// Forward declaration of object store write function
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
 
-// Recursive helper to build subtrees
 static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID *out_id) {
     Tree tree;
     tree.count = 0;
+
+    int i = 0;
+    while (i < count) {
+        const char *rel_path = entries[i].path + depth;
+        const char *slash = strchr(rel_path, '/');
+
+        if (!slash) {
+            // It's a flat file at this directory level
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = entries[i].mode;
+            te->hash = entries[i].hash;
+            strcpy(te->name, rel_path);
+            i++;
+        } else {
+            // Stub for subdirectories
+            i++;
+        }
+    }
     
-    // Stub for Commit 1
-    (void)entries; (void)count; (void)depth; (void)out_id;
-    return -1;
+    (void)out_id;
+    return -1; // Stub
 }
 
 // Build a tree hierarchy from the current index and write all tree
@@ -147,6 +162,5 @@ static int build_tree_level(IndexEntry *entries, int count, int depth, ObjectID 
 int tree_from_index(ObjectID *id_out) {
     Index idx;
     if (index_load(&idx) != 0) return -1;
-    
     return build_tree_level(idx.entries, idx.count, 0, id_out);
 }

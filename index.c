@@ -137,7 +137,7 @@ int index_status(const Index *index) {
 int index_load(Index *index) {
     index->count = 0;
     FILE *f = fopen(INDEX_FILE, "r");
-    if (!f) return 0; // File doesn't exist yet, empty index is correct
+    if (!f) return 0; 
 
     char line[1024];
     while (fgets(line, sizeof(line), f) && index->count < MAX_INDEX_ENTRIES) {
@@ -156,6 +156,10 @@ int index_load(Index *index) {
     return 0;
 }
 
+static int compare_index_entries(const void *a, const void *b) {
+    return strcmp(((const IndexEntry *)a)->path, ((const IndexEntry *)b)->path);
+}
+
 // Save the index to .pes/index atomically.
 //
 // HINTS - Useful functions and syscalls:
@@ -167,8 +171,9 @@ int index_load(Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_save(const Index *index) {
-    (void)index;
-    return -1; // Stub
+    Index sorted = *index;
+    qsort(sorted.entries, sorted.count, sizeof(IndexEntry), compare_index_entries);
+    return -1; // Stub for Commit 2
 }
 
 // Stage a file for the next commit.

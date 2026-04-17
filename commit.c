@@ -205,9 +205,13 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     if (head_read(&new_commit.parent) == 0) {
         new_commit.has_parent = 1;
     } else {
-        new_commit.has_parent = 0; // First commit in the repository
+        new_commit.has_parent = 0; 
     }
 
-    (void)message; (void)commit_id_out;
-    return -1; // Stub 2
+    snprintf(new_commit.author, sizeof(new_commit.author), "%s", pes_author());
+    new_commit.timestamp = (uint64_t)time(NULL);
+    snprintf(new_commit.message, sizeof(new_commit.message), "%s", message);
+
+    (void)commit_id_out;
+    return -1; // Stub 3
 }

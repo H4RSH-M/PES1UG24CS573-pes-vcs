@@ -199,6 +199,9 @@ int index_save(const Index *index) {
     return 0;
 }
 
+// Forward decl
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
 // Stage a file for the next commit.
 //
 // HINTS - Useful functions and syscalls:
@@ -209,6 +212,28 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    (void)index; (void)path;
-    return -1; // Stub
+    struct stat st;
+    if (lstat(path, &st) != 0) {
+        fprintf(stderr, "error: could not stat '%s'\n", path);
+        return -1;
+    }
+
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+
+    uint8_t *buf = malloc(st.st_size);
+    if (st.st_size > 0 && !buf) { fclose(f); return -1; }
+    
+    if (st.st_size > 0 && fread(buf, 1, st.st_size, f) != (size_t)st.st_size) {
+        free(buf); fclose(f); return -1;
+    }
+    fclose(f);
+
+    ObjectID blob_id;
+    if (object_write(OBJ_BLOB, buf, st.st_size, &blob_id) != 0) {
+        free(buf); return -1;
+    }
+    free(buf);
+    
+    return 0; // Stub for Commit 4
 }

@@ -135,10 +135,25 @@ int index_status(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_load(Index *index) {
-    // TODO: Implement index loading
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
+    index->count = 0;
+    FILE *f = fopen(INDEX_FILE, "r");
+    if (!f) return 0; // File doesn't exist yet, empty index is correct
+
+    char line[1024];
+    while (fgets(line, sizeof(line), f) && index->count < MAX_INDEX_ENTRIES) {
+        IndexEntry *ent = &index->entries[index->count];
+        char hex[HASH_HEX_SIZE + 1];
+        unsigned long long mtime;
+        
+        if (sscanf(line, "%o %64s %llu %u %511[^\n]", 
+                   &ent->mode, hex, &mtime, &ent->size, ent->path) == 5) {
+            ent->mtime_sec = (uint64_t)mtime;
+            hex_to_hash(hex, &ent->hash);
+            index->count++;
+        }
+    }
+    fclose(f);
+    return 0;
 }
 
 // Save the index to .pes/index atomically.
@@ -152,10 +167,8 @@ int index_load(Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_save(const Index *index) {
-    // TODO: Implement atomic index saving
-    // (See Lab Appendix for logical steps)
     (void)index;
-    return -1;
+    return -1; // Stub
 }
 
 // Stage a file for the next commit.
@@ -168,8 +181,6 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
     (void)index; (void)path;
-    return -1;
+    return -1; // Stub
 }

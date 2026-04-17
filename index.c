@@ -234,6 +234,19 @@ int index_add(Index *index, const char *path) {
         free(buf); return -1;
     }
     free(buf);
-    
-    return 0; // Stub for Commit 4
+
+    IndexEntry *ent = index_find(index, path);
+    if (!ent) {
+        if (index->count >= MAX_INDEX_ENTRIES) return -1;
+        ent = &index->entries[index->count++];
+        strncpy(ent->path, path, sizeof(ent->path) - 1);
+        ent->path[sizeof(ent->path) - 1] = '\0';
+    }
+
+    ent->mode = S_ISDIR(st.st_mode) ? 0040000 : (st.st_mode & S_IXUSR ? 0100755 : 0100644);
+    ent->hash = blob_id;
+    ent->mtime_sec = st.st_mtime;
+    ent->size = st.st_size;
+
+    return index_save(index);
 }

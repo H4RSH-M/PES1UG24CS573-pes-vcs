@@ -97,14 +97,12 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     char header[64];
     const char *type_str = (type == OBJ_BLOB) ? "blob" : (type == OBJ_TREE) ? "tree" : "commit";
     int header_len = snprintf(header, sizeof(header), "%s %zu", type_str, len);
-    header_len++; // include null terminator
+    header_len++; 
 
     uint8_t *full_buf = malloc(header_len + len);
     if (!full_buf) return -1;
-    
     memcpy(full_buf, header, header_len);
     memcpy(full_buf + header_len, data, len);
-
     compute_hash(full_buf, header_len + len, id_out);
 
     if (object_exists(id_out)) {
@@ -112,8 +110,25 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
         return 0; 
     }
 
+    char hex[HASH_HEX_SIZE + 1];
+    hash_to_hex(id_out, hex);
+    char dir_path[512];
+    snprintf(dir_path, sizeof(dir_path), "%s/%.2s", OBJECTS_DIR, hex);
+    mkdir(dir_path, 0755); 
+
+    char tmp_path[512];
+    snprintf(tmp_path, sizeof(tmp_path), "%s/tmp_XXXXXX", dir_path);
+    int fd = mkstemp(tmp_path);
+    if (fd < 0) {
+        free(full_buf);
+        return -1;
+    }
+    
+    write(fd, full_buf, header_len + len);
+    close(fd);
+
     free(full_buf);
-    return 0; // Commit 1 stub
+    return 0; // Commit 2 stub
 }
 
 // Read an object from the store.

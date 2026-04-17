@@ -125,10 +125,7 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     }
     
     if (write(fd, full_buf, header_len + len) != (ssize_t)(header_len + len)) {
-        close(fd);
-        unlink(tmp_path);
-        free(full_buf);
-        return -1;
+        close(fd); unlink(tmp_path); free(full_buf); return -1;
     }
 
     fsync(fd);
@@ -138,8 +135,7 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     char final_path[512];
     object_path(id_out, final_path, sizeof(final_path));
     if (rename(tmp_path, final_path) != 0) {
-        unlink(tmp_path);
-        return -1;
+        unlink(tmp_path); return -1;
     }
     return 0;
 }
@@ -167,7 +163,41 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
 // The caller is responsible for calling free(*data_out).
 // Returns 0 on success, -1 on error (file not found, corrupt, etc.).
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
-    // TODO: Implement
-    (void)id; (void)type_out; (void)data_out; (void)len_out;
-    return -1;
+    char path[512];
+    object_path(id, path, sizeof(path));
+
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+
+    fseek(f, 0, SEEK_END);
+    long file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    if (file_size < 0) {
+        fclose(f);
+        return -1;
+    }
+
+    uint8_t *full_buf = malloc(file_size);
+    if (!full_buf) {
+        fclose(f);
+        return -1;
+    }
+
+    if (fread(full_buf, 1, file_size, f) != (size_t)file_size) {
+        free(full_buf);
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+
+    ObjectID computed_id;
+    compute_hash(full_buf, file_size, &computed_id);
+    if (memcmp(id->hash, computed_id.hash, HASH_SIZE) != 0) {
+        free(full_buf);
+        return -1; 
+    }
+
+    free(full_buf);
+    return -1; // Commit 4 stub
 }
